@@ -127,6 +127,14 @@ final class ChatViewController: UIViewController {
         inputBarView.shouldAnimateTextDidChangeLayout = true
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Show Keyboard", style: .plain, target: self, action: #selector(ChatViewController.showHideKeyboard))
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(ChatViewController.setEditNotEdit))
+        
+        // Add a button for triggering streaming LLM responses
+        let streamingButton = UIBarButtonItem(title: "LLM Stream", style: .plain, target: self, action: #selector(ChatViewController.triggerStreamingMessage))
+        if let existingItems = navigationItem.rightBarButtonItems {
+            navigationItem.rightBarButtonItems = [navigationItem.rightBarButtonItem!] + [streamingButton]
+        } else {
+            navigationItem.rightBarButtonItems = [navigationItem.rightBarButtonItem!, streamingButton]
+        }
 
         chatLayout.settings.interItemSpacing = 8
         chatLayout.settings.interSectionSpacing = 8
@@ -683,5 +691,34 @@ extension ChatViewController: KeyboardListenerDelegate {
 extension ChatViewController: FPSCounterDelegate {
     public func fpsCounter(_ counter: FPSCounter, didUpdateFramesPerSecond fps: Int) {
         fpsView.customView.text = "FPS: \(fps)"
+    }
+}
+
+extension ChatViewController {
+    @objc
+    private func triggerStreamingMessage() {
+        guard let defaultChatController = chatController as? DefaultChatController else {
+            return
+        }
+        
+        // Sample LLM responses to simulate
+        let sampleResponses = [
+            "I've analyzed the data you provided and found several interesting patterns. First, there's a strong correlation between user engagement and feature usage. Second, retention rates increase significantly when users complete the onboarding process. And third, performance metrics show improvement after our latest optimizations.",
+            
+            "The code you're working with has a potential memory leak in the image processing function. When large images are loaded repeatedly, memory isn't being properly released. I'd recommend implementing a cache clearing mechanism that runs when memory pressure is detected. Additionally, using weak references for the delegate pattern would help avoid retain cycles.",
+            
+            "Based on your requirements, I recommend using a state management pattern to handle the complex UI interactions. This would separate the business logic from the view updates, making the code more testable and maintainable. Consider implementing a reducer pattern where each action produces a new state that's then reflected in the UI."
+        ]
+        
+        // Pick a random response
+        let randomResponse = sampleResponses.randomElement() ?? "This is a simulated LLM streaming response."
+        
+        // Simulate an AI assistant's response with streaming
+        let assistantUser = defaultChatController.messages.first(where: { $0.userId != 0 })?.userId ?? 1
+        
+        // Use the streaming functionality
+        defaultChatController.simulateStreamingMessage(finalText: randomResponse, fromUser: assistantUser) { [weak self] sections in
+            self?.processUpdates(with: sections, animated: true, requiresIsolatedProcess: true)
+        }
     }
 }

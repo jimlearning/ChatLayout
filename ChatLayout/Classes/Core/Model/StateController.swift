@@ -404,11 +404,11 @@ final class StateController<Layout: ChatLayoutRepresentation> {
         return itemFrame
     }
 
-    func itemPath(by itemId: UUID, kind: ItemKind, at state: ModelState) -> ItemPath? {
+    func itemPath(by itemId: String, kind: ItemKind, at state: ModelState) -> ItemPath? {
         layout(at: state).itemPath(by: itemId, kind: kind)
     }
 
-    func sectionIdentifier(for index: Int, at state: ModelState) -> UUID? {
+    func sectionIdentifier(for index: Int, at state: ModelState) -> String? {
         let layout = layout(at: state)
         guard index < layout.sections.count else {
             // This occurs when getting layout attributes for initial / final animations
@@ -417,7 +417,7 @@ final class StateController<Layout: ChatLayoutRepresentation> {
         return layout.sections[index].id
     }
 
-    func sectionIndex(for sectionIdentifier: UUID, at state: ModelState) -> Int? {
+    func sectionIndex(for sectionIdentifier: String, at state: ModelState) -> Int? {
         guard let sectionIndex = layout(at: state).sectionIndex(by: sectionIdentifier) else {
             // This occurs when getting layout attributes for initial / final animations
             return nil
@@ -434,7 +434,7 @@ final class StateController<Layout: ChatLayoutRepresentation> {
         return layout(at: state).sections[index]
     }
 
-    func itemIdentifier(for itemPath: ItemPath, kind: ItemKind, at state: ModelState) -> UUID? {
+    func itemIdentifier(for itemPath: ItemPath, kind: ItemKind, at state: ModelState) -> String? {
         let layout = layout(at: state)
         guard itemPath.section < layout.sections.count else {
             // This occurs when getting layout attributes for initial / final animations

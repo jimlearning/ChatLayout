@@ -18,9 +18,9 @@ protocol RandomDataProviderDelegate: AnyObject {
 
     func typingStateChanged(to state: TypingState)
 
-    func lastReadIdChanged(to id: UUID)
+    func lastReadIdChanged(to id: String)
 
-    func lastReceivedIdChanged(to id: UUID)
+    func lastReceivedIdChanged(to id: String)
 }
 
 protocol RandomDataProvider {
@@ -48,9 +48,9 @@ final class DefaultRandomDataProvider: RandomDataProvider {
 
     private var lastMessageIndex: Int = 0
 
-    private var lastReadUUID: UUID?
+    private var lastReadUUID: String?
 
-    private var lastReceivedUUID: UUID?
+    private var lastReceivedUUID: String?
 
     private let dispatchQueue = DispatchQueue.global(qos: .userInteractive)
 
@@ -182,20 +182,20 @@ final class DefaultRandomDataProvider: RandomDataProvider {
         lastMessageIndex += 1
         switch (Int.random(in: 0...8), enableRichContent) {
         case (5, true):
-            return RawMessage(id: UUID(), date: date, data: .url(websiteUrls[Int.random(in: 0..<websiteUrls.count)]), userId: sender)
+            return RawMessage(id: String(), date: date, data: .url(websiteUrls[Int.random(in: 0..<websiteUrls.count)]), userId: sender)
         case (6, true):
-            return RawMessage(id: UUID(), date: date, data: .image(.imageURL(imageUrls[Int.random(in: 0..<imageUrls.count)])), userId: sender)
+            return RawMessage(id: String(), date: date, data: .image(.imageURL(imageUrls[Int.random(in: 0..<imageUrls.count)])), userId: sender)
         case (7, true):
-            return RawMessage(id: UUID(), date: date, data: .image(.image(images[Int.random(in: 0..<images.count)])), userId: sender)
+            return RawMessage(id: String(), date: date, data: .image(.image(images[Int.random(in: 0..<images.count)])), userId: sender)
         case (8, true):
-            return RawMessage(id: UUID(),
+            return RawMessage(id: String(),
                               date: date,
                               data: .text(TextGenerator.getString(of: 5) +
                                   " \(websiteUrls[Int.random(in: 0..<websiteUrls.count)]). " +
                                   TextGenerator.getString(of: 5)),
                               userId: sender)
         default:
-            return RawMessage(id: UUID(), date: date, data: .text(TextGenerator.getString(of: 20)), userId: sender)
+            return RawMessage(id: String(), date: date, data: .text(TextGenerator.getString(of: 20)), userId: sender)
         }
     }
 

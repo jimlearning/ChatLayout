@@ -20,9 +20,11 @@ struct RawMessage: Hashable {
         case url(URL)
 
         case image(ImageMessageSource)
+        
+        case streamingText(String, isComplete: Bool)
     }
 
-    var id: UUID
+    var id: String
 
     var date: Date
 

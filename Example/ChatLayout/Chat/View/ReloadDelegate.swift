@@ -13,5 +13,5 @@
 import Foundation
 
 protocol ReloadDelegate: AnyObject {
-    func reloadMessage(with id: UUID)
+    func reloadMessage(with id: String)
 }

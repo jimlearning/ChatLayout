@@ -14,7 +14,7 @@ import Foundation
 import UIKit
 
 protocol EditingAccessoryControllerDelegate: AnyObject {
-    func deleteMessage(with id: UUID)
+    func deleteMessage(with id: String)
 }
 
 final class EditingAccessoryController {
@@ -22,9 +22,9 @@ final class EditingAccessoryController {
 
     weak var view: EditingAccessoryView?
 
-    private let messageId: UUID
+    private let messageId: String
 
-    init(messageId: UUID) {
+    init(messageId: String) {
         self.messageId = messageId
     }
 

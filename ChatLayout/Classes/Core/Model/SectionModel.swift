@@ -14,7 +14,7 @@ import Foundation
 import UIKit
 
 struct SectionModel<Layout: ChatLayoutRepresentation> {
-    let id: UUID
+    let id: String
 
     let interSectionSpacing: CGFloat
 
@@ -55,7 +55,7 @@ struct SectionModel<Layout: ChatLayoutRepresentation> {
         offsetY + height
     }
 
-    init(id: UUID = UUID(),
+    init(id: String = UUID().uuidString,
          interSectionSpacing: CGFloat,
          header: ItemModel?,
          footer: ItemModel?,

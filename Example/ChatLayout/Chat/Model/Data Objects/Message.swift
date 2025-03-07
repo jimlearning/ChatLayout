@@ -39,7 +39,7 @@ extension ChatItemAlignment {
 }
 
 struct DateGroup: Hashable {
-    var id: UUID
+    var id: String
 
     var date: Date
 
@@ -47,7 +47,7 @@ struct DateGroup: Hashable {
         ChatDateFormatter.shared.string(from: date)
     }
 
-    init(id: UUID, date: Date) {
+    init(id: String, date: Date) {
         self.id = id
         self.date = date
     }
@@ -64,13 +64,13 @@ extension DateGroup: Differentiable {
 }
 
 struct MessageGroup: Hashable {
-    var id: UUID
+    var id: String
 
     var title: String
 
     var type: MessageType
 
-    init(id: UUID, title: String, type: MessageType) {
+    init(id: String, title: String, type: MessageType) {
         self.id = id
         self.title = title
         self.type = type
@@ -94,9 +94,11 @@ struct Message: Hashable {
         case url(URL, isLocallyStored: Bool)
 
         case image(ImageMessageSource, isLocallyStored: Bool)
+        
+        case streamingText(String, isComplete: Bool)
     }
 
-    var id: UUID
+    var id: String
 
     var date: Date
 

@@ -19,12 +19,15 @@ final class DefaultChatController: ChatController {
     private let dataProvider: RandomDataProvider
 
     private var typingState: TypingState = .idle
+    
+    // Dictionary to keep track of streaming message IDs and their content
+    private var streamingMessages: [String: String] = [:]
 
     private let dispatchQueue = DispatchQueue(label: "DefaultChatController", qos: .userInteractive)
 
-    private var lastReadUUID: UUID?
+    private var lastReadUUID: String?
 
-    private var lastReceivedUUID: UUID?
+    private var lastReceivedUUID: String?
 
     private let userId: Int
 
@@ -62,7 +65,7 @@ final class DefaultChatController: ChatController {
     }
 
     func sendMessage(_ data: Message.Data, completion: @escaping ([Section]) -> Void) {
-        messages.append(RawMessage(id: UUID(), date: Date(), data: convert(data), userId: userId))
+        messages.append(RawMessage(id: String(), date: Date(), data: convert(data), userId: userId))
         propagateLatestMessages { sections in
             completion(sections)
         }
@@ -155,17 +158,6 @@ final class DefaultChatController: ChatController {
         }
     }
 
-    private func convert(_ data: Message.Data) -> RawMessage.Data {
-        switch data {
-        case let .url(url, isLocallyStored: _):
-            .url(url)
-        case let .image(source, isLocallyStored: _):
-            .image(source)
-        case let .text(text):
-            .text(text)
-        }
-    }
-
     private func convert(_ data: RawMessage.Data) -> Message.Data {
         switch data {
         case let .url(url):
@@ -188,7 +180,149 @@ final class DefaultChatController: ChatController {
             return .image(source, isLocallyStored: isPresentLocally(source))
         case let .text(text):
             return .text(text)
+        case let .streamingText(text, isComplete):
+            return .streamingText(text, isComplete: isComplete)
         }
+    }
+    
+    private func convert(_ data: Message.Data) -> RawMessage.Data {
+        switch data {
+        case let .url(url, isLocallyStored: _):
+            .url(url)
+        case let .image(source, isLocallyStored: _):
+            .image(source)
+        case let .text(text):
+            .text(text)
+        case let .streamingText(text, isComplete):
+            .streamingText(text, isComplete: isComplete)
+        }
+    }
+
+    // MARK: - Streaming Messages
+
+    /// Start a new streaming message
+    /// - Parameters:
+    ///   - initialText: The initial text to display in the message (can be empty)
+    ///   - fromUser: The user ID of the sender
+    ///   - completion: Called with updated sections after creating the message
+    /// - Returns: The ID of the newly created streaming message
+    func startStreamingMessage(initialText: String = "", fromUser: Int, completion: @escaping ([Section]) -> Void) -> String {
+        let messageId = UUID().uuidString
+        let message = RawMessage(
+            id: messageId,
+            date: Date(),
+            data: .streamingText(initialText, isComplete: false),
+            userId: fromUser
+        )
+        
+        // Add to streaming messages dictionary
+        streamingMessages[messageId] = initialText
+        
+        // Add to messages collection
+        messages.append(message)
+        
+        // Update UI
+        propagateLatestMessages { sections in
+            completion(sections)
+        }
+        
+        return messageId
+    }
+    
+    /// Update an existing streaming message with new content
+    /// - Parameters:
+    ///   - messageId: The ID of the message to update
+    ///   - newContent: The new content to display (entire content, not just the delta)
+    ///   - isComplete: Whether the streaming is complete
+    ///   - completion: Called with updated sections after updating the message
+    func updateStreamingMessage(messageId: String, newContent: String, isComplete: Bool, completion: @escaping ([Section]) -> Void) {
+        guard let index = messages.firstIndex(where: { $0.id == messageId }) else {
+            // Create a valid Section with properly formatted cells
+            let emptyCells: [Cell] = []
+            completion([Section(id: 0, title: "Loading...", cells: emptyCells)])
+            return
+        }
+        
+        // Update streaming messages dictionary
+        streamingMessages[messageId] = newContent
+        
+        // Update the message
+        messages[index].data = .streamingText(newContent, isComplete: isComplete)
+        
+        // If complete, remove from tracking
+        if isComplete {
+            streamingMessages[messageId] = nil
+        }
+        
+        // Update UI
+        propagateLatestMessages { sections in
+            completion(sections)
+        }
+    }
+
+    /// Simulates a streaming message response, gradually sending words with typing delays
+    /// - Parameters:
+    ///   - finalText: The complete text that will be displayed at the end
+    ///   - fromUser: The user ID to attribute the message to
+    ///   - completion: Called after each update with the latest sections
+    func simulateStreamingMessage(finalText: String, fromUser: Int, completion: @escaping ([Section]) -> Void) {
+        // Storage for the message ID
+        var messageId: String?
+        
+        // Split text into words
+        let words = finalText.split(separator: " ").map(String.init)
+        
+        // Start with an empty string
+        var currentText = ""
+        
+        // Add first empty message
+        messageId = startStreamingMessage(initialText: currentText, fromUser: fromUser) { sections in
+            completion(sections)
+        }
+        
+        guard let streamingMessageId = messageId else { return }
+        
+        // Process one word at a time with delay
+        var wordIndex = 0
+        
+        func sendNextWord() {
+            guard wordIndex < words.count else {
+                // All words sent, mark as complete
+                self.updateStreamingMessage(
+                    messageId: streamingMessageId,
+                    newContent: currentText,
+                    isComplete: true
+                ) { sections in
+                    completion(sections)
+                }
+                return
+            }
+            
+            // Add the next word
+            if wordIndex > 0 {
+                currentText += " "
+            }
+            currentText += words[wordIndex]
+            wordIndex += 1
+            
+            // Update the streaming message
+            self.updateStreamingMessage(
+                messageId: streamingMessageId,
+                newContent: currentText,
+                isComplete: false
+            ) { sections in
+                completion(sections)
+            }
+            
+            // Schedule the next word with random delay
+            let delay = Double.random(in: 0.05...0.2)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                sendNextWord()
+            }
+        }
+        
+        // Start the streaming process
+        sendNextWord()
     }
 
     private func repopulateMessages(requiresIsolatedProcess: Bool = false) {
@@ -213,14 +347,14 @@ extension DefaultChatController: RandomDataProviderDelegate {
         repopulateMessages()
     }
 
-    func lastReadIdChanged(to id: UUID) {
+    func lastReadIdChanged(to id: String) {
         lastReadUUID = id
         markAllMessagesAsRead {
             self.repopulateMessages()
         }
     }
 
-    func lastReceivedIdChanged(to id: UUID) {
+    func lastReceivedIdChanged(to id: String) {
         lastReceivedUUID = id
         markAllMessagesAsReceived {
             self.repopulateMessages()
@@ -289,13 +423,13 @@ extension DefaultChatController: RandomDataProviderDelegate {
 }
 
 extension DefaultChatController: ReloadDelegate {
-    func reloadMessage(with id: UUID) {
+    func reloadMessage(with id: String) {
         repopulateMessages()
     }
 }
 
 extension DefaultChatController: EditingAccessoryControllerDelegate {
-    func deleteMessage(with id: UUID) {
+    func deleteMessage(with id: String) {
         messages = Array(messages.filter { $0.id != id })
         repopulateMessages(requiresIsolatedProcess: true)
     }

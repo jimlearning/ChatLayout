@@ -37,7 +37,7 @@ public final class ChatLayoutAttributes: UICollectionViewLayoutAttributes {
     public internal(set) var layoutFrame: CGRect = .zero
 
     #if DEBUG
-    var id: UUID?
+    var id: String?
     #endif
 
     convenience init(kind: ItemKind, indexPath: IndexPath = IndexPath(item: 0, section: 0)) {

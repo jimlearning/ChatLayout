@@ -24,7 +24,7 @@ struct ItemModel {
         let interItemSpacing: CGFloat
     }
 
-    let id: UUID
+    let id: String
 
     var preferredSize: CGSize
 
@@ -50,7 +50,7 @@ struct ItemModel {
         CGRect(origin: CGPoint(x: 0, y: offsetY), size: size)
     }
 
-    init(id: UUID = UUID(), with configuration: Configuration) {
+    init(id: String = UUID().uuidString, with configuration: Configuration) {
         self.id = id
         alignment = configuration.alignment
         preferredSize = configuration.preferredSize

@@ -17,14 +17,14 @@ final class LayoutModel<Layout: ChatLayoutRepresentation> {
     private struct ItemUUIDKey: Hashable {
         let kind: ItemKind
 
-        let id: UUID
+        let id: String
     }
 
     private(set) var sections: ContiguousArray<SectionModel<Layout>>
 
     private unowned var collectionLayout: Layout
 
-    private var sectionIndexByIdentifierCache: [UUID: Int]?
+    private var sectionIndexByIdentifierCache: [String: Int]?
 
     private var itemPathByIdentifierCache: [ItemUUIDKey: ItemPath]?
 
@@ -36,7 +36,7 @@ final class LayoutModel<Layout: ChatLayoutRepresentation> {
     func assembleLayout() {
         var offsetY: CGFloat = collectionLayout.settings.additionalInsets.top
 
-        var sectionIndexByIdentifierCache = [UUID: Int](minimumCapacity: sections.count)
+        var sectionIndexByIdentifierCache = [String: Int](minimumCapacity: sections.count)
         let capacity = sections.reduce(into: 0) { $0 += $1.items.count }
         var itemPathByIdentifierCache = [ItemUUIDKey: ItemPath](minimumCapacity: capacity)
 
@@ -100,7 +100,7 @@ final class LayoutModel<Layout: ChatLayoutRepresentation> {
         offsetEverything(below: sectionIndex, by: heightDiff)
     }
 
-    func sectionIndex(by sectionId: UUID) -> Int? {
+    func sectionIndex(by sectionId: String) -> Int? {
         guard let sectionIndexByIdentifierCache else {
             assertionFailure("Internal inconsistency. Cache is not prepared.")
             return sections.firstIndex(where: { $0.id == sectionId })
@@ -108,7 +108,7 @@ final class LayoutModel<Layout: ChatLayoutRepresentation> {
         return sectionIndexByIdentifierCache[sectionId]
     }
 
-    func itemPath(by itemId: UUID, kind: ItemKind) -> ItemPath? {
+    func itemPath(by itemId: String, kind: ItemKind) -> ItemPath? {
         guard let itemPathByIdentifierCache else {
             for (sectionIndex, section) in sections.enumerated() {
                 switch kind {
@@ -160,7 +160,7 @@ final class LayoutModel<Layout: ChatLayoutRepresentation> {
         resetCache()
     }
 
-    func removeSection(by sectionIdentifier: UUID) {
+    func removeSection(by sectionIdentifier: String) {
         guard let sectionIndex = sections.firstIndex(where: { $0.id == sectionIdentifier }) else {
             assertionFailure("Incorrect section identifier.")
             return
@@ -184,7 +184,7 @@ final class LayoutModel<Layout: ChatLayoutRepresentation> {
         resetCache()
     }
 
-    func removeItem(by itemId: UUID) {
+    func removeItem(by itemId: String) {
         var itemPath: ItemPath?
         for (sectionIndex, section) in sections.enumerated() {
             if let itemIndex = section.items.firstIndex(where: { $0.id == itemId }) {

@@ -33,13 +33,13 @@ final class ImageController {
 
     private var image: UIImage?
 
-    private let messageId: UUID
+    private let messageId: String
 
     private let source: ImageMessageSource
 
     private let bubbleController: BubbleController
 
-    init(source: ImageMessageSource, messageId: UUID, bubbleController: BubbleController) {
+    init(source: ImageMessageSource, messageId: String, bubbleController: BubbleController) {
         self.source = source
         self.messageId = messageId
         self.bubbleController = bubbleController

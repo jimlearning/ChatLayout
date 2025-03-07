@@ -31,11 +31,11 @@ final class URLController {
 
     private let provider = LPMetadataProvider()
 
-    private let messageId: UUID
+    private let messageId: String
 
     private let bubbleController: BubbleController
 
-    init(url: URL, messageId: UUID, bubbleController: BubbleController) {
+    init(url: URL, messageId: String, bubbleController: BubbleController) {
         self.url = url
         self.messageId = messageId
         self.bubbleController = bubbleController
